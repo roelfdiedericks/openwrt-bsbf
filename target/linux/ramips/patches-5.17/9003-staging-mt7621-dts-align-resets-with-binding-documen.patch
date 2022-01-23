@@ -1,0 +1,114 @@
+From cba4d3ae00267970e5b851f16853481ac223b648 Mon Sep 17 00:00:00 2001
+From: Sergio Paracuellos <sergio.paracuellos@gmail.com>
+Date: Mon, 10 Jan 2022 12:49:30 +0100
+Subject: [PATCH 9003/9003] staging: mt7621-dts: align resets with binding
+ documentation
+
+Binding documentation for compatible 'mediatek,mt7621-sysc' has been updated
+to be used as a reset provider. Align reset related bits and system controller
+node with binding documentation along the dtsi file.
+
+Signed-off-by: Sergio Paracuellos <sergio.paracuellos@gmail.com>
+Reviewed-by: Philipp Zabel <p.zabel@pengutronix.de>
+---
+ drivers/staging/mt7621-dts/mt7621.dtsi | 21 +++++++++------------
+ 1 file changed, 9 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/staging/mt7621-dts/mt7621.dtsi b/drivers/staging/mt7621-dts/mt7621.dtsi
+index 6d158e4f4b8c..20cb9fc88f99 100644
+--- a/drivers/staging/mt7621-dts/mt7621.dtsi
++++ b/drivers/staging/mt7621-dts/mt7621.dtsi
+@@ -2,6 +2,7 @@
+ #include <dt-bindings/interrupt-controller/mips-gic.h>
+ #include <dt-bindings/gpio/gpio.h>
+ #include <dt-bindings/clock/mt7621-clk.h>
++#include <dt-bindings/reset/mt7621-reset.h>
+ 
+ / {
+ 	#address-cells = <1>;
+@@ -67,6 +68,7 @@ sysc: syscon@0 {
+ 			compatible = "mediatek,mt7621-sysc", "syscon";
+ 			reg = <0x0 0x100>;
+ 			#clock-cells = <1>;
++			#reset-cells = <1>;
+ 			ralink,memctl = <&memc>;
+ 			clock-output-names = "xtal", "cpu", "bus",
+ 					     "50m", "125m", "150m",
+@@ -96,7 +98,7 @@ i2c: i2c@900 {
+ 
+ 			clocks = <&sysc MT7621_CLK_I2C>;
+ 			clock-names = "i2c";
+-			resets = <&rstctrl 16>;
++			resets = <&sysc MT7621_RST_I2C>;
+ 			reset-names = "i2c";
+ 
+ 			#address-cells = <1>;
+@@ -137,7 +139,7 @@ spi0: spi@b00 {
+ 			clocks = <&sysc MT7621_CLK_SPI>;
+ 			clock-names = "spi";
+ 
+-			resets = <&rstctrl 18>;
++			resets = <&sysc MT7621_RST_SPI>;
+ 			reset-names = "spi";
+ 
+ 			#address-cells = <1>;
+@@ -272,11 +274,6 @@ pinmux {
+ 		};
+ 	};
+ 
+-	rstctrl: rstctrl {
+-		compatible = "ralink,rt2880-reset";
+-		#reset-cells = <1>;
+-	};
+-
+ 	sdhci: sdhci@1e130000 {
+ 		status = "disabled";
+ 
+@@ -355,7 +352,7 @@ ethernet: ethernet@1e100000 {
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+ 
+-		resets = <&rstctrl 6 &rstctrl 23>;
++		resets = <&sysc MT7621_RST_FE &sysc MT7621_RST_ETH>;
+ 		reset-names = "fe", "eth";
+ 
+ 		interrupt-parent = <&gic>;
+@@ -400,7 +397,7 @@ switch0: switch0@0 {
+ 				#size-cells = <0>;
+ 				reg = <0>;
+ 				mediatek,mcm;
+-				resets = <&rstctrl 2>;
++				resets = <&sysc MT7621_RST_MCM>;
+ 				reset-names = "mcm";
+ 				interrupt-controller;
+ 				#interrupt-cells = <1>;
+@@ -486,7 +483,7 @@ pcie@0,0 {
+ 			#interrupt-cells = <1>;
+ 			interrupt-map-mask = <0 0 0 0>;
+ 			interrupt-map = <0 0 0 0 &gic GIC_SHARED 4 IRQ_TYPE_LEVEL_HIGH>;
+-			resets = <&rstctrl 24>;
++			resets = <&sysc MT7621_RST_PCIE0>;
+ 			clocks = <&sysc MT7621_CLK_PCIE0>;
+ 			phys = <&pcie0_phy 1>;
+ 			phy-names = "pcie-phy0";
+@@ -501,7 +498,7 @@ pcie@1,0 {
+ 			#interrupt-cells = <1>;
+ 			interrupt-map-mask = <0 0 0 0>;
+ 			interrupt-map = <0 0 0 0 &gic GIC_SHARED 24 IRQ_TYPE_LEVEL_HIGH>;
+-			resets = <&rstctrl 25>;
++			resets = <&sysc MT7621_RST_PCIE1>;
+ 			clocks = <&sysc MT7621_CLK_PCIE1>;
+ 			phys = <&pcie0_phy 1>;
+ 			phy-names = "pcie-phy1";
+@@ -516,7 +513,7 @@ pcie@2,0 {
+ 			#interrupt-cells = <1>;
+ 			interrupt-map-mask = <0 0 0 0>;
+ 			interrupt-map = <0 0 0 0 &gic GIC_SHARED 25 IRQ_TYPE_LEVEL_HIGH>;
+-			resets = <&rstctrl 26>;
++			resets = <&sysc MT7621_RST_PCIE2>;
+ 			clocks = <&sysc MT7621_CLK_PCIE2>;
+ 			phys = <&pcie2_phy 0>;
+ 			phy-names = "pcie-phy2";
+-- 
+2.25.1
+

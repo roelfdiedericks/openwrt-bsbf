@@ -1,0 +1,55 @@
+From 246a629ac4ca20dad8caf9a2fe06172ea0e2d8ec Mon Sep 17 00:00:00 2001
+From: Sergio Paracuellos <sergio.paracuellos@gmail.com>
+Date: Mon, 10 Jan 2022 12:49:28 +0100
+Subject: [PATCH 9001/9003] dt-bindings: clock: mediatek,mt7621-sysc: add
+ '#reset-cells' property
+
+Make system controller a reset provider for all the peripherals in the
+MT7621 SoC adding '#reset-cells' property.
+
+Acked-by: Rob Herring <robh@kernel.org>
+Signed-off-by: Sergio Paracuellos <sergio.paracuellos@gmail.com>
+---
+ .../bindings/clock/mediatek,mt7621-sysc.yaml         | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/Documentation/devicetree/bindings/clock/mediatek,mt7621-sysc.yaml b/Documentation/devicetree/bindings/clock/mediatek,mt7621-sysc.yaml
+index 915f84efd763..0c0b0ae5e2ac 100644
+--- a/Documentation/devicetree/bindings/clock/mediatek,mt7621-sysc.yaml
++++ b/Documentation/devicetree/bindings/clock/mediatek,mt7621-sysc.yaml
+@@ -22,6 +22,11 @@ description: |
+ 
+   The clocks are provided inside a system controller node.
+ 
++  This node is also a reset provider for all the peripherals.
++
++  Reset related bits are defined in:
++  [2]: <include/dt-bindings/reset/mt7621-reset.h>.
++
+ properties:
+   compatible:
+     items:
+@@ -37,6 +42,12 @@ properties:
+       clocks.
+     const: 1
+ 
++  "#reset-cells":
++    description:
++      The first cell indicates the reset bit within the register, see
++      [2] for available resets.
++    const: 1
++
+   ralink,memctl:
+     $ref: /schemas/types.yaml#/definitions/phandle
+     description:
+@@ -61,6 +72,7 @@ examples:
+       compatible = "mediatek,mt7621-sysc", "syscon";
+       reg = <0x0 0x100>;
+       #clock-cells = <1>;
++      #reset-cells = <1>;
+       ralink,memctl = <&memc>;
+       clock-output-names = "xtal", "cpu", "bus",
+                            "50m", "125m", "150m",
+-- 
+2.25.1
+
