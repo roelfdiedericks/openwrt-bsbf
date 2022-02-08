@@ -1,0 +1,190 @@
+From 29b2a5393420142a3773bd7af9c765291e080a32 Mon Sep 17 00:00:00 2001
+From: Luiz Angelo Daros de Luca <luizluca@gmail.com>
+Date: Tue, 8 Feb 2022 01:09:43 -0300
+Subject: [PATCH] net: dsa: realtek: rtl8365mb: read phy regs from memory when
+ MDIO
+
+In a SMI-connected switch, indirect registers are accessed asking the
+switch to execute the access by reading and writing a sequence of chip
+registers. However, with MDIO-connected switches, those steps can be
+skipped and the driver can read the register directly from memory,
+after RTL8365MB_PHY_BASE (0x0200).
+
+Signed-off-by: Luiz Angelo Daros de Luca <luizluca@gmail.com>
+---
+ drivers/net/dsa/realtek/rtl8365mb.c | 118 ++++++++++++++++++++++++----
+ 1 file changed, 102 insertions(+), 16 deletions(-)
+
+diff --git a/drivers/net/dsa/realtek/rtl8365mb.c b/drivers/net/dsa/realtek/rtl8365mb.c
+index e1c5a67a21c4..5aec0d3c4b02 100644
+--- a/drivers/net/dsa/realtek/rtl8365mb.c
++++ b/drivers/net/dsa/realtek/rtl8365mb.c
+@@ -595,8 +595,7 @@ static int rtl8365mb_phy_poll_busy(struct realtek_priv *priv)
+ 					val, !val, 10, 100);
+ }
+ 
+-static int rtl8365mb_phy_ocp_prepare(struct realtek_priv *priv, int phy,
+-				     u32 ocp_addr)
++static int rtl8365mb_phy_set_ocp_prefix(struct realtek_priv *priv, u32 ocp_addr)
+ {
+ 	u32 val;
+ 	int ret;
+@@ -610,32 +609,44 @@ static int rtl8365mb_phy_ocp_prepare(struct realtek_priv *priv, int phy,
+ 	if (ret)
+ 		return ret;
+ 
+-	/* Set PHY register address */
+-	val = RTL8365MB_PHY_BASE;
+-	val |= FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_ADDRESS_PHYNUM_MASK, phy);
+-	val |= FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_ADDRESS_OCPADR_5_1_MASK,
++	return 0;
++}
++
++static u32 rtl8365mb_phy_ocp_ind_addr(int phy, u32 ocp_addr)
++{
++	u32 ind_addr;
++
++	ind_addr = RTL8365MB_PHY_BASE;
++	ind_addr |= FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_ADDRESS_PHYNUM_MASK,
++			       phy);
++	ind_addr |= FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_ADDRESS_OCPADR_5_1_MASK,
+ 			  ocp_addr >> 1);
+-	val |= FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_ADDRESS_OCPADR_9_6_MASK,
++	ind_addr |= FIELD_PREP(RTL8365MB_INDIRECT_ACCESS_ADDRESS_OCPADR_9_6_MASK,
+ 			  ocp_addr >> 6);
+-	ret = regmap_write(priv->map, RTL8365MB_INDIRECT_ACCESS_ADDRESS_REG,
+-			   val);
+-	if (ret)
+-		return ret;
+ 
+-	return 0;
++	return ind_addr;
+ }
+ 
+ static int rtl8365mb_phy_ocp_read(struct realtek_priv *priv, int phy,
+ 				  u32 ocp_addr, u16 *data)
+ {
+ 	u32 val;
++	u32 ind_addr;
+ 	int ret;
+ 
+ 	ret = rtl8365mb_phy_poll_busy(priv);
+ 	if (ret)
+ 		return ret;
+ 
+-	ret = rtl8365mb_phy_ocp_prepare(priv, phy, ocp_addr);
++	ret = rtl8365mb_phy_set_ocp_prefix(priv, ocp_addr);
++	if (ret)
++		return ret;
++
++	ind_addr = rtl8365mb_phy_ocp_ind_addr(phy, ocp_addr);
++
++	/* Set PHY register address */
++	ret = regmap_write(priv->map, RTL8365MB_INDIRECT_ACCESS_ADDRESS_REG,
++			   ind_addr);
+ 	if (ret)
+ 		return ret;
+ 
+@@ -673,7 +684,13 @@ static int rtl8365mb_phy_ocp_write(struct realtek_priv *priv, int phy,
+ 	if (ret)
+ 		return ret;
+ 
+-	ret = rtl8365mb_phy_ocp_prepare(priv, phy, ocp_addr);
++	ret = rtl8365mb_phy_set_ocp_prefix(priv, ocp_addr);
++	if (ret)
++		return ret;
++
++	/* Set PHY register address */
++	ret = regmap_write(priv->map, RTL8365MB_INDIRECT_ACCESS_ADDRESS_REG,
++			   rtl8365mb_phy_ocp_ind_addr(phy, ocp_addr));
+ 	if (ret)
+ 		return ret;
+ 
+@@ -757,13 +774,82 @@ static int rtl8365mb_phy_write(struct realtek_priv *priv, int phy, int regnum,
+ 
+ static int rtl8365mb_dsa_phy_read(struct dsa_switch *ds, int phy, int regnum)
+ {
+-	return rtl8365mb_phy_read(ds->priv, phy, regnum);
++	struct realtek_priv *priv = ds->priv;
++	u32 ocp_addr;
++	u32 ind_addr;
++	uint val;
++	int ret;
++
++	if (phy > RTL8365MB_PHYADDRMAX)
++		return -EINVAL;
++
++	if (regnum > RTL8365MB_PHYREGMAX)
++		return -EINVAL;
++
++	ocp_addr = RTL8365MB_PHY_OCP_ADDR_PHYREG_BASE + regnum * 2;
++
++	ret = rtl8365mb_phy_set_ocp_prefix(priv, ocp_addr);
++	if (ret)
++		return ret;
++
++	ind_addr = rtl8365mb_phy_ocp_ind_addr(phy, ocp_addr);
++
++	/* MDIO-connected switches can read directly from ind_addr (0x2000..)
++	 * although using RTL8365MB_INDIRECT_ACCESS_* does work.
++	 */
++	ret = regmap_read(priv->map, ind_addr, &val);
++	if (ret) {
++		dev_err(priv->dev,
++			"failed to read PHY%d reg %02x @ %04x, ret %d\n", phy,
++			regnum, ocp_addr, ret);
++		return ret;
++	}
++
++	val = val & 0xFFFF;
++
++	dev_dbg(priv->dev, "read PHY%d register 0x%02x @ %04x, val <- %04x\n",
++		phy, regnum, ocp_addr, val);
++
++	return val;
+ }
+ 
+ static int rtl8365mb_dsa_phy_write(struct dsa_switch *ds, int phy, int regnum,
+ 				   u16 val)
+ {
+-	return rtl8365mb_phy_write(ds->priv, phy, regnum, val);
++	struct realtek_priv *priv = ds->priv;
++	u32 ocp_addr;
++	u32 ind_addr;
++	int ret;
++
++	if (phy > RTL8365MB_PHYADDRMAX)
++		return -EINVAL;
++
++	if (regnum > RTL8365MB_PHYREGMAX)
++		return -EINVAL;
++
++	ocp_addr = RTL8365MB_PHY_OCP_ADDR_PHYREG_BASE + regnum * 2;
++
++	ret = rtl8365mb_phy_set_ocp_prefix(priv, ocp_addr);
++	if (ret)
++		return ret;
++
++	ind_addr = rtl8365mb_phy_ocp_ind_addr(phy, ocp_addr);
++
++	/* MDIO-connected switches can write directly from ind_addr (0x2000..)
++	 * although using RTL8365MB_INDIRECT_ACCESS_* does work.
++	 */
++	ret = regmap_write(priv->map, ind_addr, val);
++	if (ret) {
++		dev_err(priv->dev,
++			"failed to write PHY%d reg %02x @ %04x, ret %d\n", phy,
++			regnum, ocp_addr, ret);
++		return ret;
++	}
++
++	dev_dbg(priv->dev, "write PHY%d register 0x%02x @ %04x, val -> %04x\n",
++		phy, regnum, ocp_addr, val);
++
++	return 0;
+ }
+ 
+ static enum dsa_tag_protocol
+-- 
+2.25.1
+
