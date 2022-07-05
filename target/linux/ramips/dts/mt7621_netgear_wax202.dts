@@ -33,6 +33,9 @@
 	leds {
 		compatible = "gpio-leds";
 
+		pinctrl-names = "default";
+		pinctrl-0 = <&wdt_pins>;
+
 		led_power_green: power_green {
 			label = "green:power";
 			gpios = <&gpio 0 GPIO_ACTIVE_LOW>;
@@ -236,10 +239,12 @@
 	status = "disabled";
 };
 
-&state_default {
-	gpio {
-		groups = "uart3", "uart2", "jtag", "wdt";
-		function = "gpio";
+&pinctrl {
+	wdt_pins: wdt-pins {
+		pinmux {
+			groups = "wdt";
+			function = "gpio";
+		};
 	};
 };
 
