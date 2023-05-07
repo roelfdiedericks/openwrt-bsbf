@@ -155,8 +155,10 @@ GENERIC_FILES_DIR := $(foreach dir,$(wildcard $(GENERIC_PLATFORM_DIR)/files $(GE
 __config_name_list = $(1)/config-$(KERNEL_PATCHVER) $(1)/config-default
 __config_list = $(firstword $(wildcard $(call __config_name_list,$(1))))
 find_kernel_config=$(if $(__config_list),$(__config_list),$(lastword $(__config_name_list)))
+find_kernel_defconfig
 
 GENERIC_LINUX_CONFIG = $(call find_kernel_config,$(GENERIC_PLATFORM_DIR))
+LINUX_DEFCONFIG = 
 LINUX_TARGET_CONFIG = $(call find_kernel_config,$(PLATFORM_DIR))
 ifneq ($(PLATFORM_DIR),$(PLATFORM_SUBDIR))
   LINUX_SUBTARGET_CONFIG = $(call find_kernel_config,$(PLATFORM_SUBDIR))
@@ -164,6 +166,9 @@ endif
 
 # config file list used for compiling
 LINUX_KCONFIG_LIST = $(wildcard $(GENERIC_LINUX_CONFIG) $(LINUX_TARGET_CONFIG) $(LINUX_SUBTARGET_CONFIG) $(TOPDIR)/env/kernel-config)
+
+# config file list used for compiling for targets using defconfigs
+LINUX_KCONFIG_LIST2 = $(wildcard $(LINUX_DEFCONFIG) $(LINUX_TARGET_CONFIG) $(LINUX_SUBTARGET_CONFIG) $(TOPDIR)/env/kernel-config)
 
 # default config list for reconfiguring
 # defaults to subtarget if subtarget exists and target does not
