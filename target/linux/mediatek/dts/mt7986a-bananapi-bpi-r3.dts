@@ -264,7 +264,7 @@
 	status = "okay";
 };
 
-&wmac {
+&wifi {
 	status = "okay";
 	pinctrl-names = "default", "dbdc";
 	pinctrl-0 = <&wf_2g_5g_pins>, <&wf_led_pins>;
@@ -440,7 +440,7 @@
 	pinctrl-0 = <&i2c0_pins>;
 	status = "okay";
 };
-
+/*
 &pwm {
 	pinctrl-names = "default";
 	pinctrl-0 = <&pwm_pins>;
@@ -452,8 +452,8 @@
 	cooling-levels = <255 96 52 0>;
 	status = "okay";
 };
-
-&wmac {
+*/
+&wifi {
 	mediatek,eeprom-data = <0x86790900 0xc4326 0x60000000 0x00 0x00 0x00 0x00 0x00
 				0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
 				0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x1000000

@@ -50,7 +50,7 @@ define Device/asus_tuf-ax4200
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd | pad-to 64k
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
-TARGET_DEVICES += asus_tuf-ax4200
+#TARGET_DEVICES += asus_tuf-ax4200
 
 
 define Device/bananapi_bpi-r3
@@ -121,7 +121,7 @@ define Device/mediatek_mt7986a-rfb-nand
 	fit lzma $$(KDIR)/image-$$(firstword $$(DEVICE_DTS)).dtb with-initrd
   DTC_FLAGS += -@ --space 32768
 endef
-TARGET_DEVICES += mediatek_mt7986a-rfb-nand
+#TARGET_DEVICES += mediatek_mt7986a-rfb-nand
 
 define Device/mediatek_mt7986b-rfb
   DEVICE_VENDOR := MediaTek
@@ -139,7 +139,7 @@ define Device/mediatek_mt7986b-rfb
   IMAGE/factory.bin := append-ubi | check-size $$$$(IMAGE_SIZE)
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
-TARGET_DEVICES += mediatek_mt7986b-rfb
+#TARGET_DEVICES += mediatek_mt7986b-rfb
 
 define Device/tplink_tl-xdr-common
   DEVICE_VENDOR := TP-Link
@@ -167,7 +167,7 @@ define Device/tplink_tl-xdr4288
   ARTIFACT/bl31-uboot.fip := bl31-uboot tplink_tl-xdr4288
   $(call Device/tplink_tl-xdr-common)
 endef
-TARGET_DEVICES += tplink_tl-xdr4288
+#TARGET_DEVICES += tplink_tl-xdr4288
 
 define Device/tplink_tl-xdr6086
   DEVICE_MODEL := TL-XDR6086
@@ -175,7 +175,7 @@ define Device/tplink_tl-xdr6086
   ARTIFACT/bl31-uboot.fip := bl31-uboot tplink_tl-xdr6086
   $(call Device/tplink_tl-xdr-common)
 endef
-TARGET_DEVICES += tplink_tl-xdr6086
+#TARGET_DEVICES += tplink_tl-xdr6086
 
 define Device/tplink_tl-xdr6088
   DEVICE_MODEL := TL-XDR6088
@@ -183,7 +183,7 @@ define Device/tplink_tl-xdr6088
   ARTIFACT/bl31-uboot.fip := bl31-uboot tplink_tl-xdr6088
   $(call Device/tplink_tl-xdr-common)
 endef
-TARGET_DEVICES += tplink_tl-xdr6088
+#TARGET_DEVICES += tplink_tl-xdr6088
 
 define Device/xiaomi_redmi-router-ax6000-stock
   DEVICE_VENDOR := Xiaomi
@@ -200,7 +200,7 @@ ifneq ($(CONFIG_TARGET_ROOTFS_INITRAMFS),)
 endif
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
 endef
-TARGET_DEVICES += xiaomi_redmi-router-ax6000-stock
+#TARGET_DEVICES += xiaomi_redmi-router-ax6000-stock
 
 define Device/xiaomi_redmi-router-ax6000-ubootmod
   DEVICE_VENDOR := Xiaomi
@@ -228,4 +228,4 @@ ifneq ($(CONFIG_TARGET_ROOTFS_INITRAMFS),)
   ARTIFACT/initramfs-factory.ubi := append-image-stage initramfs-recovery.itb | ubinize-kernel
 endif
 endef
-TARGET_DEVICES += xiaomi_redmi-router-ax6000-ubootmod
+#TARGET_DEVICES += xiaomi_redmi-router-ax6000-ubootmod
