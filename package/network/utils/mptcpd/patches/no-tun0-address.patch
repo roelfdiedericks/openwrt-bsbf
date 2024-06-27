@@ -1,0 +1,17 @@
+diff --git a/plugins/path_managers/addr_adv.c b/plugins/path_managers/addr_adv.c
+index ff6fad2..7931fc4 100644
+--- a/plugins/path_managers/addr_adv.c
++++ b/plugins/path_managers/addr_adv.c
+@@ -76,6 +76,12 @@ static void addr_adv_new_local_address(struct mptcpd_interface const *i,
+ {
+         struct mptcpd_idm *const idm = mptcpd_pm_get_idm(pm);
+         mptcpd_aid_t const id = mptcpd_idm_get_id(idm, sa);
++        const char *tunnel_i_name = "tun0";
++
++        if (strcmp(i->name, tunnel_i_name) == 0) {
++                l_info("tun0 interface detected.");
++                return;
++        }
+ 
+         if (id == 0) {
+                 l_error("Unable to map addr to ID.");
