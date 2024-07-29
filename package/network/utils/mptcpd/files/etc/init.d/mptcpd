@@ -2,13 +2,16 @@
 
 USE_PROCD=1
 
-START=10
+START=100
 
 EXEC=/usr/bin/mptcpd
 
 start_service() {
-	procd_open_instance
-	procd_set_param command $EXEC
-	procd_set_param respawn
-	procd_close_instance
+        procd_open_instance
+        procd_set_param command $EXEC -l stderr -d
+        procd_set_param stdout 1
+        procd_set_param stderr 1
+        procd_set_param respawn
+        procd_close_instance
 }
+
