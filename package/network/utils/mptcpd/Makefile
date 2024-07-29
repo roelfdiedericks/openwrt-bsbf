@@ -10,8 +10,9 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=mptcpd
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_URL:=https://github.com/multipath-tcp/mptcpd.git
-PKG_SOURCE_VERSION:=863e83f255f55dfd0ba9325d816bd99f6d9da0c2
+#PKG_MIRROR_HASH=skip
+PKG_SOURCE_URL:=https://github.com/roelfdiedericks/mptcpd.git
+PKG_SOURCE_VERSION:=main
 PKG_VERSION:=0.12
 PKG_RELEASE:=1
 
